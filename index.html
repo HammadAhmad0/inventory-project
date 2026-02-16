@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Add Inventory Item</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    margin:0;
+    padding:30px;
+}
+.container{
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    width:320px;
+    margin:auto;
+    box-shadow:0 5px 15px rgba(0,0,0,0.15);
+}
+h2{ text-align:center; margin-bottom:20px; }
+
+input, select, button{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+button{
+    background:#4CAF50;
+    color:white;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+button:hover{ background:#43a047; }
+
+.msg{ text-align:center; margin-top:10px; color:green; }
+
+table{
+    margin:30px auto;
+    border-collapse:collapse;
+    background:white;
+    box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
+th,td{
+    padding:10px 15px;
+    border:1px solid #ddd;
+    text-align:center;
+}
+th{ background:#4CAF50; color:white; }
+
+.deleteBtn{
+    background:#e53935;
+}
+.deleteBtn:hover{
+    background:#c62828;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Add Item</h2>
+
+<form id="f">
+
+<input id="item" placeholder="Item Name" required>
+
+<select id="cat"></select>
+
+<input id="qty" type="number" placeholder="Quantity" required>
+
+<input id="exp" type="date">
+
+<select id="user"></select>
+
+<button type="submit">Submit</button>
+
+</form>
+
+<div class="msg" id="msg"></div>
+
+</div>
+
+<div id="list"></div>
+
+<script>
+
+// 🔹 LOAD DROPDOWNS
+async function loadDropdowns(){
+
+    const c = await fetch("http://localhost:3000/categories");
+    const categories = await c.json();
+
+    let catHTML="<option value=''>Select Category</option>";
+    categories.forEach(x=>{
+        catHTML += `<option value="${x.category_id}">${x.category_name}</option>`;
+    });
+    cat.innerHTML = catHTML;
+
+    const u = await fetch("http://localhost:3000/users");
+    const users = await u.json();
+
+    let userHTML="<option value=''>Select User</option>";
+    users.forEach(x=>{
+        userHTML += `<option value="${x.user_id}">${x.name}</option>`;
+    });
+    user.innerHTML = userHTML;
+}
+
+
+// 🔹 LOAD ITEMS TABLE
+async function loadItems(){
+
+    const res = await fetch("http://localhost:3000/items");
+    const data = await res.json();
+
+    let html="<table><tr>\
+    <th>ID</th><th>Name</th><th>Category</th>\
+    <th>Qty</th><th>Expiry</th><th>Added By</th><th>Action</th></tr>";
+
+    data.forEach(i=>{
+
+        // ✅ FIX: format expiry date cleanly
+        let expiry="";
+        if(i.expiry_date){
+            expiry = new Date(i.expiry_date).toISOString().split('T')[0];
+        }
+
+        html+=`<tr>
+            <td>${i.item_id}</td>
+            <td>${i.item_name}</td>
+            <td>${i.category_name}</td>
+            <td>${i.quantity}</td>
+            <td>${expiry}</td>
+            <td>${i.added_by}</td>
+            <td>
+                <button class="deleteBtn" onclick="deleteItem(${i.item_id})">
+                Delete
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    html+="</table>";
+
+    list.innerHTML=html;
+}
+
+
+// 🔹 DELETE ITEM
+async function deleteItem(id){
+
+    if(!confirm("Delete this item?")) return;
+
+    const res=await fetch("http://localhost:3000/deleteItem/"+id,{
+        method:"DELETE"
+    });
+
+    alert(await res.text());
+    loadItems();
+}
+
+
+// 🔹 PAGE LOAD
+window.onload=function(){
+
+    loadDropdowns();
+    loadItems();
+
+    f.onsubmit=async function(e){
+
+        e.preventDefault();
+
+        const data={
+            item_name:item.value,
+            category_id:cat.value,
+            quantity:qty.value,
+            expiry_date:exp.value||null,
+            added_by:user.value
+        };
+
+        const res=await fetch("http://localhost:3000/addItem",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(data)
+        });
+
+        msg.innerText=await res.text();
+        this.reset();
+
+        loadItems();
+    };
+
+};
+
+</script>
+
+</body>
+</html>
