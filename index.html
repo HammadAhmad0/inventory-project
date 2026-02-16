@@ -93,10 +93,14 @@ th{ background:#4CAF50; color:white; }
 
 <script>
 
+// ✅ LIVE BACKEND URL
+const API = "https://inventory-backend-5wy9.onrender.com";
+
+
 // 🔹 LOAD DROPDOWNS
 async function loadDropdowns(){
 
-    const c = await fetch("http://localhost:3000/categories");
+    const c = await fetch(`${API}/categories`);
     const categories = await c.json();
 
     let catHTML="<option value=''>Select Category</option>";
@@ -105,7 +109,7 @@ async function loadDropdowns(){
     });
     cat.innerHTML = catHTML;
 
-    const u = await fetch("http://localhost:3000/users");
+    const u = await fetch(`${API}/users`);
     const users = await u.json();
 
     let userHTML="<option value=''>Select User</option>";
@@ -119,7 +123,7 @@ async function loadDropdowns(){
 // 🔹 LOAD ITEMS TABLE
 async function loadItems(){
 
-    const res = await fetch("http://localhost:3000/items");
+    const res = await fetch(`${API}/items`);
     const data = await res.json();
 
     let html="<table><tr>\
@@ -128,7 +132,6 @@ async function loadItems(){
 
     data.forEach(i=>{
 
-        // ✅ FIX: format expiry date cleanly
         let expiry="";
         if(i.expiry_date){
             expiry = new Date(i.expiry_date).toISOString().split('T')[0];
@@ -150,7 +153,6 @@ async function loadItems(){
     });
 
     html+="</table>";
-
     list.innerHTML=html;
 }
 
@@ -160,7 +162,7 @@ async function deleteItem(id){
 
     if(!confirm("Delete this item?")) return;
 
-    const res=await fetch("http://localhost:3000/deleteItem/"+id,{
+    const res=await fetch(`${API}/deleteItem/${id}`,{
         method:"DELETE"
     });
 
@@ -187,7 +189,7 @@ window.onload=function(){
             added_by:user.value
         };
 
-        const res=await fetch("http://localhost:3000/addItem",{
+        const res=await fetch(`${API}/addItem`,{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(data)
